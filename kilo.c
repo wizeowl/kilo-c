@@ -3,15 +3,25 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+#include <errno.h>
 
 struct termios orig_termios;
 
+void die(const char *s) {
+    perror(s);
+    exit(1);
+}
+
 void disableRawMode() {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1) {
+        die("tcsetattr");
+    }
 }
 
 void enableRawMode() {
-    tcgetattr(STDIN_FILENO, &orig_termios);
+    if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) {
+        die("tcsetattr");
+    }
     atexit(disableRawMode);
 
     struct termios raw = orig_termios;
@@ -26,22 +36,35 @@ void enableRawMode() {
     raw.c_lflag &= ~(ICRNL | IXON);
     // turn off output processing,
     raw.c_lflag &= ~(OPOST);
+    raw.c_lflag &= ~(BRKINT | INPCK | ISTRIP);
+    raw.c_lflag |= (CS8);
 
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+    raw.c_cc[VMIN] = 0;
+    raw.c_cc[VTIME] = 1;
+
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
+        die("tcsetattr");
+    }
 }
 
 int main() {
     enableRawMode();
 
-    char c;
     // read one char for standard input into c
-    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+    while (1) {
+        char c = '\0';
+
+        if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) {
+            die("read");
+        }
+
         if (iscntrl(c)/*form <ctype.h>, is this a control character?*/) {
             printf/*from <stdio.h>*/("%d\n", c);
         } else {
             // the \r is for carriage return
             printf("%d ('%c')\r\n", c, c);
         }
+        if (c == 'q') break;
     }
 
     return 0;
