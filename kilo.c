@@ -18,11 +18,14 @@ void enableRawMode() {
     // c_lflag: local flags
     // disable ECHO
     // disable ICANON (so we can read char by char instead of wait for enter)
-    // disable ISIG for ctrl-c and ctrl-v
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG);
+    // disable ISIG for ctrl-c(SIGINT) and ctrl-z(SIGSTP)
+    // disable ctrl-v(IEXTEN)
+    raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
     // disable ctrl-s(suspend output) and ctrl-q(resume output)
-    raw.c_lflag &= ~(IXON);
-
+    // disable ICRNL input flag carriage return new line
+    raw.c_lflag &= ~(ICRNL | IXON);
+    // turn off output processing,
+    raw.c_lflag &= ~(OPOST);
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
@@ -36,7 +39,8 @@ int main() {
         if (iscntrl(c)/*form <ctype.h>, is this a control character?*/) {
             printf/*from <stdio.h>*/("%d\n", c);
         } else {
-            printf("%d ('%c')\n", c, c);
+            // the \r is for carriage return
+            printf("%d ('%c')\r\n", c, c);
         }
     }
 
