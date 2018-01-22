@@ -1,3 +1,0 @@
-/home/bss/workspace/kilo/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/bss/workspace/kilo/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/bss/workspace/kilo/cmake-build-debug/CMakeFiles/kilo.dir
