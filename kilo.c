@@ -134,6 +134,23 @@ void abFree(struct abuf *ab) {
 
 /*** input ***/
 
+void editorMoveCursor(char key) {
+    switch (key) {
+        case 'q':
+            E.cx--;
+            break;
+        case 'd':
+            E.cx++;
+            break;
+        case 'z':
+            E.cy--;
+            break;
+        case 's':
+            E.cy++;
+            break;
+    }
+}
+
 void editorProcessKeypress() {
     char c = editorReadKey();
     switch (c) {
@@ -141,6 +158,13 @@ void editorProcessKeypress() {
             write(STDOUT_FILENO, "\x1b[2J", 4);
             write(STDOUT_FILENO, "\x1b[H", 3);
             exit(0);
+            break;
+
+        case 'q':
+        case 's':
+        case 'd':
+        case 'z':
+            editorMoveCursor(c);
             break;
     }
 }
@@ -183,7 +207,7 @@ void editorRefreshScreen() {
     char buf[32];
     snprintf(buf, sizeof(buf), "\x1b[%d%dH", E.cy + 1, E.cx + 1);
     abAppend(&ab, buf, strlen(buf));
-    
+
     abAppend(&ab, "\x1b[?25h", 6);
 
     write(STDOUT_FILENO, ab.b, ab.len);
